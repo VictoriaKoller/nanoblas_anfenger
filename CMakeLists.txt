@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
+set( CMAKE_CXX_COMPILER "C:\\msys64\\ucrt64\\bin\\g++.exe" )
+set( CMAKE_C_COMPILER "C:\\msys64\\ucrt64\\bin\\gcc.exe" )
 # Set default CMAKE_BUILD_TYPE to RelWithDebInfo if not specified
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
