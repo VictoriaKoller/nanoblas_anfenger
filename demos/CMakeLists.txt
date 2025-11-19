@@ -17,7 +17,17 @@ target_compile_features(demo_matrix PRIVATE cxx_std_20)
 add_executable(demo_lapack demo_lapack.cpp)
 target_include_directories(demo_lapack PRIVATE "${NANOBLAS_SRC_DIR}")
 target_link_libraries(demo_lapack PRIVATE LAPACK::LAPACK)
+
 target_compile_features(demo_lapack PRIVATE cxx_std_20)
+
+# Windows: copy openblas DLL for demo_lapack after build
+if(WIN32)
+    add_custom_command(TARGET demo_lapack POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/openblas/bin/libopenblas.dll"
+            $<TARGET_FILE_DIR:demo_lapack>
+    )
+endif()
 
 # Install demo executables (optional)
 install(TARGETS demo_vector demo_matrix demo_lapack

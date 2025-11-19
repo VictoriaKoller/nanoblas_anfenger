@@ -57,11 +57,3 @@ if(NANOBLAS_BUILD_DEMOS)
     add_subdirectory(demos)
 endif()
 
-# Windows: copy openblas DLL for demo_lapack after build
-if(WIN32 AND TARGET demo_lapack)
-    add_custom_command(TARGET demo_lapack POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_BINARY_DIR}/openblas/bin/libopenblas.dll"
-            $<TARGET_FILE_DIR:demo_lapack>
-    )
-endif()

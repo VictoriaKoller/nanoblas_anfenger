@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 #include "vector.hpp"
 #include "matrix.hpp"
@@ -69,10 +70,14 @@ namespace nanoblas
 
     integer n = a.rows();
     integer m = a.cols();
-    integer lda = std::max(a.dist(), 1ul);
 
-    integer dx = std::max(x.dist(), 1ul);
-    integer dy = std::max(y.dist(), 1ul);
+    //integer lda = std::max(a.dist(), 1ul);
+    //integer dx = std::max(x.dist(), 1ul);
+    //integer dy = std::max(y.dist(), 1ul);
+
+    integer lda = std::max<integer>(static_cast<integer>(a.dist()), 1);
+    integer dx  = std::max<integer>(static_cast<integer>(x.dist()), 1);
+    integer dy  = std::max<integer>(static_cast<integer>(y.dist()), 1);
 
     int err =
       dgemv_(&transa,
@@ -128,9 +133,14 @@ namespace nanoblas
   
     double alpha = 1.0;
     double beta = 0;
-    integer lda = std::max(a.dist(), 1ul);
-    integer ldb = std::max(b.dist(), 1ul);
-    integer ldc = std::max(c.dist(), 1ul);
+
+
+    //integer lda = std::max(a.dist(), 1ul);
+    //integer ldb = std::max(b.dist(), 1ul);
+    //integer ldc = std::max(c.dist(), 1ul);
+    integer lda = std::max<integer>(static_cast<integer>(a.dist()), 1);
+    integer ldb  = std::max<integer>(static_cast<integer>(b.dist()), 1);
+    integer ldc  = std::max<integer>(static_cast<integer>(c.dist()), 1);
 
     int err =
       gemm (&transa_, &transb_, &n, &m, &k, &alpha, 

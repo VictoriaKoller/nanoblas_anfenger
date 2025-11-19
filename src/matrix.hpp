@@ -3,6 +3,8 @@
 
 #include "matexpr.hpp"
 #include "vector.hpp"
+#include <algorithm>
+
 
 namespace nanoblas
 {

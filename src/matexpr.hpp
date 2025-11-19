@@ -3,6 +3,8 @@
 
 #include <cstddef>
 #include <iostream>
+#include <algorithm>
+
 
 #include "vecexpr.hpp"
 
