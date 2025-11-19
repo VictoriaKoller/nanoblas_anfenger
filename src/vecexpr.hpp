@@ -4,6 +4,8 @@
 #include<complex>
 #include<cassert>
 #include <type_traits>
+#include <algorithm>
+
 
 namespace nanoblas
 {

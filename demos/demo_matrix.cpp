@@ -3,6 +3,7 @@
 #include <matrix.hpp>
 #include <inverse.hpp>
 #include <lapack_interface.hpp>
+#include <algorithm>
 
 using namespace nanoblas;
 

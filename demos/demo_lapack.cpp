@@ -2,6 +2,7 @@
 
 #include <vector.hpp>
 #include <lapack_interface.hpp>
+#include <algorithm>
 
 
 using namespace nanoblas;
