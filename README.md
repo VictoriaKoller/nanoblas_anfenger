@@ -5,7 +5,7 @@ A project
 - Anna S.
 - Martin S.
 - Emanuel S
-struggeled with.
+// struggeled with.
 
 
 Read the [Documentation](https://tuwien-asc.github.io/nanoblas/intro.html)
