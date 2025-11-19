@@ -201,6 +201,41 @@ namespace nanoblas
                     
   };
 
+template <typename T=double, ORDERING ORD=ColMajor>
+void addMatMat (MatrixView<T,ORD> A, MatrixView<T,ORD> B, MatrixView<T,ORD> C) {
+  constexpr size_t BH=96;
+  constexpr size_t BW=96;
+  alignas (64) double memBA[BH*BW];
+  for (size_t i1 = 0; i1 < A.rows(); i1 += BH)
+    for (size_t j1 = 0; j1 < A.cols(); j1 += BW) {
+      size_t i2 = min(A.rows(), i1+BH);
+      size_t j2 = min(A.cols(), j1+BW);
+
+      MatrixView<T, ORD> Ablock(i2-i1, j2-j1, BW, memBA);
+      Ablock = A.rows(i1,i2).cols(j1,j2);
+      addMatMat2 (Ablock, B.rows(j1,j2), C.rows(i1,i2));
+    }
+}
+
+template <typename T=double, ORDERING ORD=ColMajor>
+void addMatMat2 (MatrixView<T,ORD> A, MatrixView<T,ORD> B, MatrixView<T,ORD> C) {
+  constexpr size_t H=4;
+  constexpr size_t W=12;
+
+  for (size_t j = 0; j+W <= C.cols(); j += W) 
+    for (size_t i = 0; i+H <= C.rows(); i += H)
+       AddMatMatKernel<H,W> (A.cols(), &A(i,0), A.dist(),
+                            &B(0,j), B.dist(), &C(i,j), C.dist());
+  // leftover rows and cols
+}
+
+
+template <size_t H, size_t W, typename T=double, ORDERING ORD=ColMajor>
+void AddMatMatKernel(size_t cols, MatrixView<T,ORD>  matrixA, size_t a_dist,MatrixView<T,ORD>  matrixB, size_t b_dist, MatrixView<T,ORD>  matrixC, size_t c_dist){
+
+                            }
+
+
 }
 
 

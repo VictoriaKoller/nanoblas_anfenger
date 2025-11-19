@@ -1,5 +1,9 @@
 # Welcome to nanoblas' documentation!
-
+By 
+- Victoria K.
+- Anna S.
+- Martin S.
+- Emanuel S.
 
 nanoblas is a C++ library for basic linear algebra operations.
 The library provides template classes **Vector** and **Matrix**.
