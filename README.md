@@ -1,11 +1,11 @@
 # nanoblas
 A simple basic linear algebra implementation using modern C++.
-A project 
+A project from
 - Victoria K.
 - Anna S.
 - Martin S.
 - Emanuel S
-// struggeled with.
+
 
 
 Read the [Documentation](https://tuwien-asc.github.io/nanoblas/intro.html)
