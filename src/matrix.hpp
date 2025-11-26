@@ -1,6 +1,8 @@
 #ifndef FILE_MATRIX
 #define FILE_MATRIX
 
+enum ORDERING { RowMajor, ColMajor };
+
 #include "matexpr.hpp"
 #include "vector.hpp"
 #include <algorithm>
@@ -9,7 +11,6 @@
 namespace nanoblas
 {
   
-  // enum ORDERING { RowMajor, ColMajor };
 
   template <typename T, ORDERING ORD>
   class MatrixView : public MatExpr<MatrixView<T,ORD>>
@@ -327,9 +328,37 @@ void addMatMat2 (MatrixView<T,ORD> A,
   }
 }
 
+  // Parallele Variante: C += A * B
+  template <typename T = double, ORDERING ORD = ColMajor>
+  void addMatMat_parallel (MatrixView<T,ORD> A,
+                           MatrixView<T,ORD> B,
+                           MatrixView<T,ORD> C)
+  {
+    static_assert(ORD == ColMajor, "addMatMat_parallel ist für ColMajor ausgelegt");
 
+    const size_t M = C.rows();
+    if (M == 0 || C.cols() == 0) return;
 
-}
+    // Körnung: wie viele Zeilen übernimmt eine Task?
+    constexpr size_t GRAIN = 32;   
+    const size_t num_tasks = (M + GRAIN - 1) / GRAIN;
+
+    RunParallel(static_cast<int>(num_tasks),
+                [=,&A,&B,&C](int t, int /*ntasks*/)
+    {
+      const size_t i1 = static_cast<size_t>(t) * GRAIN;
+      if (i1 >= M) return;
+      const size_t i2 = std::min(M, i1 + GRAIN);
+
+      // Zeilenbereich [i1, i2) von A und C bearbeiten
+      auto Asub = A.rows(i1, i2);
+      auto Csub = C.rows(i1, i2);
+
+      addMatMat2(Asub, B, Csub);   // sequentiell in diesem Block
+    });
+  }
+
+} // namespace nanoblas
 
 
 #endif
