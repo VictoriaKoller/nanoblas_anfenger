@@ -36,6 +36,6 @@ if(WIN32)
 endif()
 
 # Install demo executables (optional)
-install(TARGETS demo_vector demo_matrix demo_lapack
+install(TARGETS demo_vector demo_matrix demo_lapack demo_parallel
     RUNTIME DESTINATION nanoblas/demo
 )

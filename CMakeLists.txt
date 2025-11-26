@@ -46,8 +46,23 @@ target_include_directories(nanoblas INTERFACE ${LAPACK_INCLUDE_DIRS})
 
 pybind11_add_module(nanoblas_impl src/bind_bla.cpp)
 target_include_directories(nanoblas_impl PRIVATE src)
+# Also make HP_Anfenger headers available to nanoblas_impl (for taskmanager, simd, ...)
+target_include_directories(nanoblas_impl PRIVATE ${CMAKE_SOURCE_DIR}/HP_Anfenger/src)
 target_link_libraries(nanoblas_impl PRIVATE LAPACK::LAPACK)
 target_compile_features(nanoblas_impl PRIVATE cxx_std_20)
+
+# Build a small static library from HP_Anfenger sources that demos can link against
+set(HP_SOURCES
+        ${CMAKE_SOURCE_DIR}/HP_Anfenger/src/taskmanager.cpp
+        ${CMAKE_SOURCE_DIR}/HP_Anfenger/src/timer.cpp
+)
+add_library(ASC_HPC STATIC ${HP_SOURCES})
+target_include_directories(ASC_HPC PUBLIC ${CMAKE_SOURCE_DIR}/HP_Anfenger/src)
+if (UNIX)
+    target_link_libraries(ASC_HPC PUBLIC pthread)
+endif()
+# concurrentqueue header location
+target_include_directories(ASC_HPC PRIVATE ${CMAKE_SOURCE_DIR}/HP_Anfenger/concurrentqueue)
 
 install(TARGETS nanoblas_impl DESTINATION nanoblas)
 install(FILES src/vector.hpp DESTINATION nanoblas/include)
@@ -59,4 +74,5 @@ add_subdirectory(HP_Anfenger)
 if(NANOBLAS_BUILD_DEMOS)
     add_subdirectory(demos)
 endif()
+
 
