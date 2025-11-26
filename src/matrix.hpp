@@ -201,39 +201,132 @@ namespace nanoblas
                     
   };
 
-template <typename T=double, ORDERING ORD=ColMajor>
-void addMatMat (MatrixView<T,ORD> A, MatrixView<T,ORD> B, MatrixView<T,ORD> C) {
-  constexpr size_t BH=96;
-  constexpr size_t BW=96;
-  alignas (64) double memBA[BH*BW];
+// Annahme: MatrixView-Schnittstelle wie im Skript:
+// - size_t rows() const;
+// - size_t cols() const;
+// - size_t dist() const;      // leading dimension
+// - T& operator()(size_t i, size_t j);
+// - MatrixView rows(i1,i2), cols(j1,j2), etc.
+
+template <typename T = double, ORDERING ORD = ColMajor>
+void addMatMat (MatrixView<T,ORD> A,
+                MatrixView<T,ORD> B,
+                MatrixView<T,ORD> C)
+{
+  constexpr size_t BH = 96;
+  constexpr size_t BW = 96;
+
+  static_assert(ORD == ColMajor, "addMatMat ist für ColMajor ausgelegt");
+
+  alignas(64) T memBA[BH*BW];
+
   for (size_t i1 = 0; i1 < A.rows(); i1 += BH)
     for (size_t j1 = 0; j1 < A.cols(); j1 += BW) {
-      size_t i2 = min(A.rows(), i1+BH);
-      size_t j2 = min(A.cols(), j1+BW);
+      size_t i2 = std::min(A.rows(), i1 + BH);
+      size_t j2 = std::min(A.cols(), j1 + BW);
 
-      MatrixView<T, ORD> Ablock(i2-i1, j2-j1, BW, memBA);
-      Ablock = A.rows(i1,i2).cols(j1,j2);
-      addMatMat2 (Ablock, B.rows(j1,j2), C.rows(i1,i2));
+      MatrixView<T,ORD> Ablock(i2 - i1, j2 - j1, BW, memBA);
+      Ablock = A.rows(i1, i2).cols(j1, j2);
+
+      // B-Block: (j1..j2) Zeilen, alle Spalten
+      // C-Block: (i1..i2) Zeilen, alle Spalten
+      addMatMat2(Ablock, B.rows(j1, j2), C.rows(i1, i2));
     }
 }
 
-template <typename T=double, ORDERING ORD=ColMajor>
-void addMatMat2 (MatrixView<T,ORD> A, MatrixView<T,ORD> B, MatrixView<T,ORD> C) {
-  constexpr size_t H=4;
-  constexpr size_t W=12;
 
-  for (size_t j = 0; j+W <= C.cols(); j += W) 
-    for (size_t i = 0; i+H <= C.rows(); i += H)
-       AddMatMatKernel<H,W> (A.cols(), &A(i,0), A.dist(),
-                            &B(0,j), B.dist(), &C(i,j), C.dist());
-  // leftover rows and cols
+/// Mikro-Kernel für einen H×W-Block von C.
+/// A: Zeiger auf A(i,0) (H Zeilen, K Spalten, ColMajor, leading dimension a_dist)
+/// B: Zeiger auf B(0,j) (K Zeilen, W Spalten, ColMajor, leading dimension b_dist)
+/// C: Zeiger auf C(i,j) (H Zeilen, W Spalten, ColMajor, leading dimension c_dist)
+template <size_t H, size_t W, typename T = double>
+void AddMatMatKernel(size_t K,
+                     const T* A, size_t a_dist,
+                     const T* B, size_t b_dist,
+                     T*       C, size_t c_dist)
+{
+  // Akkumulatoren im Register/Stack
+  T acc[H][W];
+
+  // C-Block laden
+  for (size_t h = 0; h < H; ++h)
+    for (size_t w = 0; w < W; ++w)
+      acc[h][w] = C[h + w * c_dist];
+
+  // Spaltenzeiger für B vorbereiten: B(0, j+w)
+  const T* b_cols[W];
+  for (size_t w = 0; w < W; ++w)
+    b_cols[w] = B + w * b_dist;
+
+  // K-Schleife
+  for (size_t k = 0; k < K; ++k) {
+    const T* a_col_k = A + k * a_dist;  // Zeiger auf Spalte k von A (ab Zeile i)
+    T a_vals[H];
+    for (size_t h = 0; h < H; ++h)
+      a_vals[h] = a_col_k[h];
+
+    for (size_t w = 0; w < W; ++w) {
+      T b_kw = b_cols[w][k];            // B(k, j+w)
+      for (size_t h = 0; h < H; ++h)
+        acc[h][w] += a_vals[h] * b_kw;
+    }
+  }
+
+  // Zurück nach C schreiben
+  for (size_t h = 0; h < H; ++h)
+    for (size_t w = 0; w < W; ++w)
+      C[h + w * c_dist] = acc[h][w];
 }
 
 
-template <size_t H, size_t W, typename T=double, ORDERING ORD=ColMajor>
-void AddMatMatKernel(size_t cols, MatrixView<T,ORD>  matrixA, size_t a_dist,MatrixView<T,ORD>  matrixB, size_t b_dist, MatrixView<T,ORD>  matrixC, size_t c_dist){
+template <typename T = double, ORDERING ORD = ColMajor>
+void addMatMat2 (MatrixView<T,ORD> A,
+                 MatrixView<T,ORD> B,
+                 MatrixView<T,ORD> C)
+{
+  constexpr size_t H = 4;
+  constexpr size_t W = 12;
 
-                            }
+  static_assert(ORD == ColMajor, "addMatMat2 ist für ColMajor ausgelegt");
+
+  const size_t M = C.rows();
+  const size_t N = C.cols();
+  const size_t K = A.cols();   // = B.rows()
+
+  // Vollständige H×W-Blöcke
+  size_t j = 0;
+  for (; j + W <= N; j += W) {
+    size_t i = 0;
+    for (; i + H <= M; i += H) {
+      AddMatMatKernel<H, W, T>(
+        K,
+        &A(i, 0), A.dist(),
+        &B(0, j), B.dist(),
+        &C(i, j), C.dist()
+      );
+    }
+
+    // Restzeilen für diese W-Spalten
+    for (; i < M; ++i) {
+      for (size_t k = 0; k < K; ++k) {
+        T aik = A(i, k);
+        for (size_t jj = 0; jj < W; ++jj)
+          C(i, j + jj) += aik * B(k, j + jj);
+      }
+    }
+  }
+
+  // Restspalten (Spalten < W)
+  for (; j < N; ++j) {
+    for (size_t i = 0; i < M; ++i) {
+      T sum = C(i, j);
+      for (size_t k = 0; k < K; ++k)
+        sum += A(i, k) * B(k, j);
+      C(i, j) = sum;
+    }
+  }
+}
+
 
 
 }
