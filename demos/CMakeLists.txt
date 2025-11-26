@@ -23,7 +23,7 @@ target_compile_features(demo_lapack PRIVATE cxx_std_20)
 # Demo: demo_parallel
 add_executable(demo_parallel demo_parallel.cpp)
 target_include_directories(demo_parallel PRIVATE "${NANOBLAS_SRC_DIR}")
-
+target_link_libraries(demo_parallel PRIVATE hp_anfenger LAPACK::LAPACK)
 target_compile_features(demo_parallel PRIVATE cxx_std_20)
 
 # Windows: copy openblas DLL for demo_lapack after build

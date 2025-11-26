@@ -1,12 +1,15 @@
 #ifndef FILE_MATRIX
 #define FILE_MATRIX
 
-enum ORDERING { RowMajor, ColMajor };
-
-#include "matexpr.hpp"
 #include "vector.hpp"
+#include "matexpr.hpp"
 #include <algorithm>
+#include <functional>
 
+// Forward declaration for parallel support
+namespace ASC_HPC {
+  void RunParallel(int num, const std::function<void(int, int)>& func);
+}
 
 namespace nanoblas
 {
@@ -343,7 +346,7 @@ void addMatMat2 (MatrixView<T,ORD> A,
     constexpr size_t GRAIN = 32;   
     const size_t num_tasks = (M + GRAIN - 1) / GRAIN;
 
-    RunParallel(static_cast<int>(num_tasks),
+    ASC_HPC::RunParallel(static_cast<int>(num_tasks),
                 [=,&A,&B,&C](int t, int /*ntasks*/)
     {
       const size_t i1 = static_cast<size_t>(t) * GRAIN;

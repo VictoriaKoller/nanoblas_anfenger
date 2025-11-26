@@ -52,6 +52,9 @@ target_compile_features(nanoblas_impl PRIVATE cxx_std_20)
 install(TARGETS nanoblas_impl DESTINATION nanoblas)
 install(FILES src/vector.hpp DESTINATION nanoblas/include)
 
+# Add HP_Anfenger submodule
+add_subdirectory(HP_Anfenger)
+
 # Demos (conditional)
 if(NANOBLAS_BUILD_DEMOS)
     add_subdirectory(demos)
