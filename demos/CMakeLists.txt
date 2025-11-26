@@ -23,7 +23,8 @@ target_compile_features(demo_lapack PRIVATE cxx_std_20)
 # Demo: demo_parallel
 add_executable(demo_parallel demo_parallel.cpp)
 target_include_directories(demo_parallel PRIVATE "${NANOBLAS_SRC_DIR}")
-
+target_include_directories(demo_parallel PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../HP_Anfenger/src")
+target_link_libraries(demo_parallel PRIVATE LAPACK::LAPACK ASC_HPC)
 target_compile_features(demo_parallel PRIVATE cxx_std_20)
 
 # Windows: copy openblas DLL for demo_lapack after build
@@ -36,6 +37,6 @@ if(WIN32)
 endif()
 
 # Install demo executables (optional)
-install(TARGETS demo_vector demo_matrix demo_lapack
+install(TARGETS demo_vector demo_matrix demo_lapack demo_parallel
     RUNTIME DESTINATION nanoblas/demo
 )

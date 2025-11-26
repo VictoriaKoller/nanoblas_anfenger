@@ -3,17 +3,23 @@
 #include <inverse.hpp>
 #include <lapack_interface.hpp>
 #include <algorithm>
-#include "../HP_Anfenger/src/taskmanager.hpp"
-#include "../HP_Anfenger/src/timer.hpp"
+#include <taskmanager.hpp>
+#include <timer.hpp>
 
 using namespace std;
 using namespace nanoblas;
+using namespace ASC_HPC;
 
 int main() {
   const size_t n = 1000;
-    Matrix<double, RowMajor> A(n,n);
-    Matrix<double, RowMajor> B(n,n);
-    Matrix<double, RowMajor> C(n,n);
+    Matrix<double, nanoblas::ColMajor> A(n,n);
+    Matrix<double, nanoblas::ColMajor> B(n,n);
+    Matrix<double, nanoblas::ColMajor> C(n,n);
+
+
+    A = 2.0;
+    B = 3.0;
+    C = 0.0;
 
 
   StartWorkers(3);                    // 3 Worker + Hauptthread = 4 Threads
@@ -27,5 +33,6 @@ int main() {
 
   StopWorkers();
 
-  std::cout << C(0,0) << std::endl;   // Plausibilitätscheck (sollte 2*n sein)
+  std::cout << C(0,0) << std::endl;   // Plausibilitätscheck 
+  return 0;
 }

@@ -7,6 +7,8 @@ enum ORDERING { RowMajor, ColMajor };
 #include "vector.hpp"
 #include <algorithm>
 
+#include "../HP_Anfenger/src/taskmanager.hpp"
+
 
 namespace nanoblas
 {
@@ -343,7 +345,7 @@ void addMatMat2 (MatrixView<T,ORD> A,
     constexpr size_t GRAIN = 32;   
     const size_t num_tasks = (M + GRAIN - 1) / GRAIN;
 
-    RunParallel(static_cast<int>(num_tasks),
+    ASC_HPC::RunParallel(static_cast<int>(num_tasks),
                 [=,&A,&B,&C](int t, int /*ntasks*/)
     {
       const size_t i1 = static_cast<size_t>(t) * GRAIN;
